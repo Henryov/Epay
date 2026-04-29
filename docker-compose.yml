@@ -28,7 +28,8 @@ services:
       MARIADB_PASSWORD: epay_secret
     volumes:
       - epay-db-data:/var/lib/mysql
-    # 不映射端口到宿主机，仅通过 epay-net 内部网络访问
+    ports:
+      - "127.0.0.1:3306:3306"  # 仅宿主机本地可访问，外网无法直连
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
