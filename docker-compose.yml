@@ -1,0 +1,46 @@
+services:
+  epay-app:
+    image: ghcr.io/henryov/epay:latest
+    container_name: epay-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=epay-db
+      - DB_PORT=3306
+      - DB_USER=epay
+      - DB_PASS=epay_secret
+      - DB_NAME=epay
+    depends_on:
+      epay-db:
+        condition: service_healthy
+    networks:
+      - epay-net
+
+  epay-db:
+    image: mariadb:11
+    container_name: epay-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root_secret
+      MARIADB_DATABASE: epay
+      MARIADB_USER: epay
+      MARIADB_PASSWORD: epay_secret
+    volumes:
+      - epay-db-data:/var/lib/mysql
+    # 不映射端口到宿主机，仅通过 epay-net 内部网络访问
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - epay-net
+
+volumes:
+  epay-db-data:
+
+networks:
+  epay-net:
+    driver: bridge
